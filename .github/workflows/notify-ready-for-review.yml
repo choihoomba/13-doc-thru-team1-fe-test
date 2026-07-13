@@ -9,7 +9,14 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - name: Send Discord notification
+        env:
+          ACTOR: ${{ github.actor }}
+          PR_TITLE: ${{ github.event.pull_request.title }}
+          PR_URL: ${{ github.event.pull_request.html_url }}
         run: |
-          curl -H "Content-Type: application/json" \
-            -d '{"content": "🔔 **${{ github.actor }}**님이 리뷰를 요청했어요!\n**${{ github.event.pull_request.title }}**\n${{ github.event.pull_request.html_url }}"}' \
-            ${{ secrets.DISCORD_WEBHOOK_URL }}
+          MESSAGE=$(jq -n \
+            --arg actor "$ACTOR" \
+            --arg title "$PR_TITLE" \
+            --arg url "$PR_URL" \
+            '{content: "🔔 **\($actor)**님이 리뷰를 요청했어요!\n**\($title)**\n\($url)"}')
+          curl -H "Content-Type: application/json" -d "$MESSAGE" ${{ secrets.DISCORD_WEBHOOK_URL }}
